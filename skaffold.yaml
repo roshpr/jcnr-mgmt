@@ -5,15 +5,12 @@ metadata:
 build:
   artifacts:
     - image: jcnr-mgmt
-      buildpacks:
-        builder: gcr.io/buildpacks/builder:v1    
-      context: jcnr-mgmt
+      context: cmd/jcnr-mgmt
       requires:
         - image: base
           alias: BASE
     - image: base
-      context: base  
-
+      context: base 
 manifests:
   rawYaml:
     - cmd/jcnr-mgmt/kubernetes/deployment.yaml
