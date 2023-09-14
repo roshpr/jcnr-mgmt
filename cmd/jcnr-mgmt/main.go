@@ -5,15 +5,18 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
+	"strings"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
 	"github.com/aws/aws-sdk-go-v2/service/ec2/types"
+	"ssd-git.juniper.net/crdc-devops/jcnr-mgmt/pkg/awsutils"
 )
 
 func handler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "leeroooooy app!!\n")
+	log.Println("Manage JCNR cloud resources")
 }
 
 func main() {
@@ -25,48 +28,38 @@ func main() {
 
 	client := ec2.NewFromConfig(cfg)
 
-	// GET INSTANCE ID
-	// imdsclient := imds.NewFromConfig(cfg)
-	// localip, err := imdsclient.GetMetadata(context.TODO(), &imds.GetMetadataInput{
-	// 	Path: "instance-id",
-	// })
-	// if err != nil {
-	// 	fmt.Printf("Unable to retrieve the private IP address from the EC2 instance: %s\n", err)
-	// 	return
-	// }
-	// response, err := imdsclient.GetRegion(context.TODO(), &imds.GetRegionInput{})
-	// if err != nil {
-	// 	fmt.Printf("Unable to retrieve the region from the EC2 instance %v\n", err)
-	// }
-
-	// fmt.Printf("region: %v\n", response.Region)
-
-	// fmt.Printf("local-ip: %v\n", localip)
-
+	//instanceid := "i-0471896f4516943ab"
 	// ### GET Network interfaces from tags
 	// TAGS
 	//	* cluster	 jcnrpvc-jcnrsrini-jcnr
 	//	* jcnrnode	jcnr1
 	//	* interfaceindex	4
-	fmt.Println("Find the Interfaces with tags")
-	interfaceinput := &ec2.DescribeNetworkInterfacesInput{
-		Filters: []types.Filter{
-			{
-				Name: aws.String("tag:Name"),
-				Values: []string{
-					"jcnrpvc-jcnrsrini-jcnr-node2-mintf5",
-				},
-			},
-		},
-	}
-	interfaceresult, err := client.DescribeNetworkInterfaces(context.TODO(), interfaceinput)
+
+	log.Println("Find the Interfaces with tags")
 	//result, err := GetInstances(context.TODO(), client, input)
-	if err != nil {
-		fmt.Println("Got an error retrieving information about your Amazon EC2 instances:")
-		fmt.Println(err)
-		return
+	clustername := os.Getenv("CLUSTERNAME") // EKS Cluster name
+	nodename := os.Getenv("NODENAME")       // node name such as jcnr1, jcnr2
+	intfnames := os.Getenv("INTFLIST")      // "2,3,4"
+	intfList := strings.Split(intfnames, ",")
+
+	for _, intf := range intfList {
+		interfaceresult, shouldReturn := getNodeInterfaces(client, clustername, nodename, intf)
+		if shouldReturn {
+			log.Println("Failed to fetch interfaces for node intf", nodename, intf)
+			return
+		}
+
+		shouldReturn1 := attachInterface(interfaceresult, instanceid, client)
+		if shouldReturn1 {
+			return
+		}
 	}
-	instanceid := "i-0471896f4516943ab"
+
+	http.HandleFunc("/", handler)
+	http.ListenAndServe(":50051", nil)
+}
+
+func attachInterface(interfaceresult *ec2.DescribeNetworkInterfacesOutput, instanceid string, client *ec2.Client) bool {
 	for _, r := range interfaceresult.NetworkInterfaces {
 		fmt.Println("DESCRIPTION ID: " + *r.Description)
 		fmt.Println("InterfaceID ID: " + *r.NetworkInterfaceId)
@@ -82,11 +75,32 @@ func main() {
 		if err1 != nil {
 			fmt.Println("Got an error attaching interfaces to Amazon EC2 instances:")
 			fmt.Println(err1)
-			return
+			return true
 		}
 		fmt.Println(result1)
 	}
+	return false
+}
 
-	http.HandleFunc("/", handler)
-	http.ListenAndServe(":50051", nil)
+func getNodeInterfaces(client *ec2.Client, clustername string, nodename string, intfno string) (*ec2.DescribeNetworkInterfacesOutput, bool) {
+	interfaceFilterName := clustername + "-" + nodename + "-intf" + intfno
+	fmt.Println("Get Interface for ", interfaceFilterName)
+	interfaceinput := &ec2.DescribeNetworkInterfacesInput{
+		Filters: []types.Filter{
+			{
+				Name: aws.String("tag:Name"),
+				Values: []string{
+					interfaceFilterName,
+				},
+			},
+		},
+	}
+	interfaceresult, err := client.DescribeNetworkInterfaces(context.TODO(), interfaceinput)
+
+	if err != nil {
+		fmt.Println("Got an error retrieving information about your Amazon EC2 instances:")
+		fmt.Println(err)
+		return nil, true
+	}
+	return interfaceresult, false
 }

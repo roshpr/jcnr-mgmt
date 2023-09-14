@@ -34,3 +34,17 @@ spec:
         ports:
         - containerPort: 50051
           name: http
+        env:
+        - name: CLUSTERNAME
+          value: "jcnrpvc-jcnrsrini-jcnr"
+        - name: NODENAME
+          value: "jcnr1"
+        - name: INTFLIST
+          value: "5" 
+                   
+      hostNetwork: true
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext:
+          privileged: true
+          runAsUser: 0
