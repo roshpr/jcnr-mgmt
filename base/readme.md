@@ -1,0 +1,1 @@
+docker build --build-arg GO_VERSION=1.20 -t ubuntu-go -f DockerfileUbuntu

@@ -24,9 +24,23 @@ func main() {
 	if err != nil {
 		panic("configuration error, " + err.Error())
 	}
+	awsregion := os.Getenv("AWS_REGION") // EKS Cluster name
+
+	log.Println("ENV AWS_REGION is missing: ", awsregion)
+
 	clustername := os.Getenv("CLUSTERNAME") // EKS Cluster name
-	nodename := os.Getenv("NODENAME")       // node name such as jcnr1, jcnr2
-	intfnames := os.Getenv("INTFLIST")      // "2,3,4"
+	if len(strings.TrimSpace(clustername)) == 0 {
+		log.Fatal("Fatal: ENV CLUSTERNAME is mandatory")
+	}
+	log.Println("Clustername env: ", clustername)
+	nodename := os.Getenv("NODENAME") // node name such as jcnr1, jcnr2
+	if len(strings.TrimSpace(nodename)) == 0 {
+		log.Fatal("Fatal: ENV NODENAME is mandatory")
+	}
+	intfnames := os.Getenv("INTFLIST") // "2,3,4"
+	if len(strings.TrimSpace(intfnames)) == 0 {
+		log.Fatal("Fatal: ENV INTFLIST is mandatory")
+	}
 
 	client := ec2.NewFromConfig(cfg)
 	// GET JCNR Instances

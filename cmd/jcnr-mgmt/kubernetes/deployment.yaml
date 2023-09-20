@@ -35,6 +35,12 @@ spec:
         - containerPort: 50051
           name: http
         env:
+        - name: AWS_ACCESS_KEY_ID
+          value: "sadasdasdasd"
+        - name: AWS_SECRET_ACCESS_KEY
+          value: "asdasdasd"     
+        - name: AWS_REGION
+          value: "us-east-1"             
         - name: CLUSTERNAME
           value: "jcnrpvc-jcnrsrini-jcnr"
         - name: NODENAME
@@ -45,6 +51,6 @@ spec:
       hostNetwork: true
       restartPolicy: Always
       schedulerName: default-scheduler
-      securityContext:
-          privileged: true
-          runAsUser: 0
+      # securityContext:
+      #     privileged: true
+      #     runAsUser: 0
