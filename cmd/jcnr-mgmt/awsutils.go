@@ -31,7 +31,7 @@ import (
 //		log.Printf("local-ip: %v\n", instanceid)
 //		return instanceid, nil
 //	}
-func getInstanceFromTags(client *ec2.Client, instancename string) (*ec2.DescribeInstancesOutput, error) {
+func getInstanceFromTags(client *ec2.Client, instancename string, vpcid string) (*ec2.DescribeInstancesOutput, error) {
 	log.Println("Get Instance for ", instancename)
 	instanceinput := &ec2.DescribeInstancesInput{
 		Filters: []types.Filter{
@@ -39,6 +39,12 @@ func getInstanceFromTags(client *ec2.Client, instancename string) (*ec2.Describe
 				Name: aws.String("tag:Name"),
 				Values: []string{
 					instancename,
+				},
+			},
+			{
+				Name: aws.String("vpc-id"),
+				Values: []string{
+					vpcid,
 				},
 			},
 		},

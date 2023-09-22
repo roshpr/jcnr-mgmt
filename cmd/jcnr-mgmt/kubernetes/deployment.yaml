@@ -36,17 +36,21 @@ spec:
           name: http
         env:
         - name: AWS_ACCESS_KEY_ID
-          value: "sadasdasdasd"
+          value: ""
         - name: AWS_SECRET_ACCESS_KEY
-          value: "asdasdasd"     
+          value: ""     
         - name: AWS_REGION
           value: "us-east-1"             
         - name: CLUSTERNAME
-          value: "jcnrpvc-jcnrsrini-jcnr"
-        - name: NODENAME
-          value: "jcnr1"
+          value: ""
+        - name: NODEGROUPS
+          value: "one,two"          
+        - name: NODENAMES
+          value: "node1,node2"
         - name: INTFLIST
-          value: "5" 
+          value: "2,3" 
+        - name: VPCID
+          value: ""           
                    
       hostNetwork: true
       restartPolicy: Always
